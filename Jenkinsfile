@@ -3,20 +3,32 @@ node {
 
     stage('Checkout') {
         dockerAgent.pull()
-        dockerAgent.inside("-p 3000:3000") {
+        dockerAgent.inside() {
             checkout scm
         }
     }
 
     stage('Build') {
-        dockerAgent.inside("-p 3000:3000") {
+        dockerAgent.inside {
             sh 'npm install'
         }
     }
 
     stage('Test') {
-        dockerAgent.inside("-p 3000:3000") {
+        dockerAgent.inside {
             sh './jenkins/scripts/test.sh'
+        }
+    }
+
+    stage('Manual Approval') {
+        input message: "Lanjutkan ke tahap Deploy?"
+    }
+
+    stage('Deploy') {
+        dockerAgent.inside {
+            sh './jenkins/scripts/deliver.sh'
+            sleep(time: 1, unit: 'MINUTES')
+            sh './jenkins/scripts/kill.sh'   
         }
     }
 }
